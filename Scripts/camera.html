@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<!--
+This is experimental and uncommenting this will cause the
+feeds to malfunction. Current iteration does not require this
+portion be uncommented to run. This contains all the variables we need
+to customize our feed page (non-react integration for now)
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        video{
+            border: 2px solid #4CAF50; /* Green */
+            border-radius: 15px;
+            width: 400px;
+            height: 300px;
+        }
+
+        button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+-->
+<body>
+<video id="Camera1" width="400" height="200"></video>
+<video id="Camera2" width="400" height="200"></video>
+<video id="Camera3" width="400" height="200"></video>
+<video id="Camera4" width="400" height="200"></video>
+<button id="openCamera1" onclick="startView(this)">Start Camera 1</button>
+<button id="openCamera2" onclick="startView(this)">Start Camera 2</button>
+<button id="openCamera3" onclick="startView(this)">Start Camera 3</button>
+<button id="openCamera4" onclick="startView(this)">Start Camera 4</button>
+<script src="camera.js"></script>
+</body>
+</html>
+
