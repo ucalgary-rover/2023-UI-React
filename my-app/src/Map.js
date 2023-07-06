@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 const Map = () => {
@@ -7,8 +7,27 @@ const Map = () => {
   const polylineRef = useRef(null);
   const [startLatLng, setStartLatLng] = useState(null);
   const [distance, setDistance] = useState({ x: 0, y: 0 });
-  const [isAddingMarker, setIsAddingMarker] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [recordPath, setRecordPath] = useState([]);
+  const [fileContent, setFileContent] = useState(null);
+    const onFileChange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                setFileContent(json);
+                console.log('File content:', json);
+            } catch (err) {
+                console.log('Error parsing JSON:', err);
+                alert('There was an error reading this file. Make sure it is a valid JSON file.');
+            }
+        }
+
+        reader.readAsText(file);
+    }
+
   useEffect(() => {
 // Leaflet map initialization code
     const mapContainer = mapRef.current;
@@ -25,6 +44,14 @@ const Map = () => {
               'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
         }
     ).addTo(map);
+
+      if (fileContent && Array.isArray(fileContent)) {
+          //const latLngs = fileContent.map(point => [point.lat, point.lng]);
+          //console.log(latLngs)
+          polylineRef.current = L.polyline(fileContent, { color: 'red' }).addTo(map);
+          map.fitBounds(polylineRef.current.getBounds());
+      }
+
     const marker = L.marker([51.4619, -112.7107]).addTo(map);
     markerRef.current = marker;
 
@@ -65,10 +92,12 @@ const Map = () => {
         const latLngs = [...polyline.getLatLngs()];
         latLngs.push(updatedLatLng);
         polyline.setLatLngs(latLngs);
+        setRecordPath([...recordPath, updatedLatLng]);
+        console.log(recordPath)
       }
     };
     const handleMapClick = (e) => {
-      if (isAddingMarker && selectedMarker) {
+      if (selectedMarker) {
         const { lat, lng } = e.latlng;
         const markerIcon = L.divIcon({
           className: 'custom-marker',
@@ -86,18 +115,23 @@ const Map = () => {
       map.off('click', handleMapClick);
       map.remove(); // Remove the map instance
     };
-  }, [isAddingMarker, selectedMarker]);
-  const handleStartButtonClick = () => {
-    setIsAddingMarker(!isAddingMarker);
-    setSelectedMarker(null);
-    setDistance({ x: 0, y: 0 }); // Reset distance values to 0
-  };
+  }, [selectedMarker, fileContent]);
   const handlePlaceMarkerClick = () => {
-// Handle logic for the "Place Marker" button click
+      console.log(recordPath);
+      const json = JSON.stringify(recordPath, null, 2);
+      const downloadFile = new Blob([json],{type:'application/json'});
+      const href = URL.createObjectURL(downloadFile);
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = 'data.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-// You can add your code here to perform the desired functionality
   };
-  return (
+
+
+    return (
       <div style={{ position: 'relative', height: '100vh' }}>
         <div
             id="map"
@@ -106,24 +140,24 @@ const Map = () => {
 
                   0, zIndex: 0 }}
         />
-        <div
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              zIndex: 1
-            }}
-        >
-          <button
-              style={{
-                padding: '10px',
-                fontSize: '16px'
-              }}
-              onClick={handleStartButtonClick}
-          >
-            {isAddingMarker ? 'Cancel' : 'Start'}
-          </button>
-        </div>
+        {/*<div*/}
+        {/*    style={{*/}
+        {/*      position: 'absolute',*/}
+        {/*      top: '100px',*/}
+        {/*      right: '300px',*/}
+        {/*      zIndex: 1*/}
+        {/*    }}*/}
+        {/*>*/}
+        {/*  <button*/}
+        {/*      style={{*/}
+        {/*        padding: '10px',*/}
+        {/*        fontSize: '16px'*/}
+        {/*      }}*/}
+        {/*      onClick={handleStartButtonClick}*/}
+        {/*  >*/}
+        {/*    {isAddingMarker ? 'Cancel' : 'Start'}*/}
+        {/*  </button>*/}
+        {/*</div>*/}
         <div
             style={{
               position: 'absolute',
@@ -143,6 +177,17 @@ const Map = () => {
             Place Marker
           </button>
         </div>
+          <div
+              style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '200px',
+                  zIndex: 1
+              }}
+          >
+              <input type="file" onChange={onFileChange} accept=".json" />
+              {/*{fileContent && <pre>{JSON.stringify(fileContent, null, 2)}</pre>}*/}
+          </div>
         <div
             style={{
               position: 'absolute',
